@@ -1,0 +1,95 @@
+/* General Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* Header Section */
+header {
+    background-color: #2a9d8f;
+    color: white;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+header p {
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+/* Main Section */
+main {
+    padding: 20px;
+}
+
+.listing h2 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.home {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: transform 0.3s ease-in-out;
+}
+
+.home:hover {
+    transform: translateY(-10px);
+}
+
+.home img {
+    width: 100%;
+    height: auto;
+    border-bottom: 2px solid #f4f4f4;
+}
+
+.home h3 {
+    margin: 1rem;
+    font-size: 1.5rem;
+}
+
+.home p {
+    margin: 0.5rem 1rem;
+    font-size: 1rem;
+}
+
+.contact-btn {
+    background-color: #e76f51;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 1rem;
+    display: block;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.contact-btn:hover {
+    background-color: #f4a261;
+}
+
+/* Footer Section */
+footer {
+    background-color: #264653;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
