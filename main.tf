@@ -1,6 +1,14 @@
+#Provisioning of an AWS Ubuntu EC2 Instance and installing docker on it
+
 provider "aws" {
-  region = "us-west-2"
+  region = "eu-west-2" # Change as needed
+  access_key = var.access_key
+  secret_key = var.secret_key
 }
+
+variable "access_key" {}
+variable "secret_key" {}
+variable "private_key" {}
 
 # Create a security group for the EC2 instance
 
@@ -30,76 +38,124 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 }
 
-# Create an EC2 instance with an Ubuntu AMI 
-resource "aws_instance" "portal_ec2" {
-  ami             = "ami-0c55b159cbfafe1f0" # Replace with the latest Ubuntu AMI for your region
-  instance_type   = "t2.micro" 
-  key_name        = "Ans-Auth" 
+resource "aws_instance" "dock" {
+  ami           = "ami-0cbf43fd299e3a464" # Updated Amazon Linux AMI
+  instance_type =  "t2.micro"
   security_groups = [aws_security_group.allow_ssh_http.name]
-
-  # User data to install Docker and run the container
-  user_data = <<-EOF
-              #!/bin/bash
-              apt-get update -y
-              apt-get install -y docker.io
-              systemctl start docker
-              systemctl enable docker
-              EOF
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key =  var.private_key
+    host        = self.public_ip
+  }
 
   tags = {
-    Name = "Portal-EC2"
+    Name = "nginx-server"
   }
 
-  provisioner "file" {
-    source      = "index.html"  # Replace with your local file path for index.html
-    destination = "/tmp/index.html"  # This will copy it to the EC2 instance
-
-    connection {
-      type     = "ssh"
-      user     = "ubuntu" # Ensure this matches your EC2 instance's user
-      private_key = file("~/.ssh/your-key.pem")  # Path to your private SSH key
-      host = self.public_ip
-    }
-  }
-
-  provisioner "file" {
-    source      = "styles.css"  # Replace with your local file path for styles.css
-    destination = "/tmp/styles.css"  # This will copy it to the EC2 instance
-
-    connection {
-      type     = "ssh"
-      user     = "ubuntu" # Ensure this matches your EC2 instance's user
-      private_key = file("~/.ssh/your-key.pem")  # Path to your private SSH key
-      host = self.public_ip
-    }
-  }
-
-  provisioner "file" {
-    source      = "images/"  # Replace with your local folder path for images
-    destination = "/tmp/images/"  # This will copy the images to the EC2 instance
-
-    connection {
-      type     = "ssh"
-      user     = "ubuntu" # Ensure this matches your EC2 instance's user
-      private_key = file("~/.ssh/your-key.pem")  # Path to your private SSH key
-      host = self.public_ip
-    }
-  }
   provisioner "remote-exec" {
     inline = [
-      "docker run -d --name portal -v /tmp/index.html:/usr/share/nginx/html/index.html -v /tmp/styles.css:/usr/share/nginx/html/styles.css -v /tmp/images:/usr/share/nginx/html/images nginx"  # Runs the container and copies the files
+      "sudo yum update -y",
+      "sudo amazon-linux-extras install docker -y",
+      "sudo systemctl start docker",
+      "sudo systemctl enable docker",
+      "sudo usermod -aG docker ec2-user", # Add the ec2-user to the docker group
+      "sudo systemctl restart docker"     # Restart Docker engine
     ]
 
     connection {
-      type     = "ssh"
-      user     = "ubuntu" # Ensure this matches your EC2 instance's user
-      private_key = file("~/.ssh/your-key.pem")  # Path to your private SSH key
-      host = self.public_ip
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = var.private_key
+      host        = self.public_ip
+    }
+  }
+}
+
+# Deploy an Nginx container using Docker
+
+resource "null_resource" "nginx" {
+  depends_on = [aws_instance.dock]
+
+  provisioner "remote-exec" {
+    inline = [
+      "docker run -d --name portal -p 80:80 nginx"         # No need for sudo now
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key =  var.private_key
+      host        = aws_instance.dock.public_ip
     }
   }
 }
 
 
-output "instance_public_ip" {
-  value = aws_instance.portal_ec2.public_ip
+# Copy index.html, styles.css, and images folder from local machine to the Nginx container
+
+resource "null_resource" "copy_files" {
+  depends_on = [null_resource.nginx]
+
+  # Copy index.html
+  provisioner "file" {
+    source      = "index.html"
+    destination = "/tmp/index.html"
+    
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key =  var.private_key
+      host        = aws_instance.dock.public_ip
+    }
+  }
+
+  # Copy styles.css
+  provisioner "file" {
+    source      = "styles.css"
+    destination = "/tmp/styles.css"
+    
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key =  var.private_key 
+      host        = aws_instance.dock.public_ip
+    }
+  }
+
+  # Copy images folder
+  provisioner "file" {
+    source      = "/images/"
+    destination = "/tmp/images"
+    
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key =  var.private_key
+      host        = aws_instance.dock.public_ip
+    }
+  }
+
+  # Move files into the Nginx container
+  provisioner "remote-exec" {
+    inline = [
+      "docker cp /tmp/index.html portal:/usr/share/nginx/html/",
+      "docker cp /tmp/styles.css portal:/usr/share/nginx/html/",
+      "docker cp /tmp/images portal:/usr/share/nginx/html/"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = var.private_key
+      host        = aws_instance.dock.public_ip
+    }
+      
+      
+    }
+  }
+
+output "web_instance_ip" {
+  value = aws_instance.dock.public_ip
+  
 }
