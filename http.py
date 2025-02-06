@@ -1,19 +1,19 @@
 import requests
 
-# List of URLs to connect to
+# A List of all the URLs to connect to
 urls = [
     "http://www.google.com",
     "http://www.example.com",
     "http://www.github.com"
 ]
 
-# Iterate over each URL in the list
+# The FOR Loop for ITERATION over each URLs in the list
 for url in urls:
-    # Make a GET request to fetch data
+    # Using the GET request command to fetch data
     try:
         response = requests.get(url)
         
-        # Check if the connection is successful
+        # Checking and verification of the success of the connection (s)
         if response.status_code == 200:
             print(f"Successfully connected to {url}.")
             print("Response content:")
