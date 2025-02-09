@@ -1,19 +1,35 @@
 ---
-- name: Deploy web application onto Nginx in Docker on EC2
-  hosts: webservers
-  become: yes
+- name: Setup web server and deploy content
+  hosts: aws_amazon_linux
   vars:
-    docker_image: "nginx"
-    web_app_repo: "https://github.com/Oreire/home_listing.git"
-    web_app_dir: "/home/ec2-user/"
+    git_repo_url: 'https://github.com/Oreire/home_listing.git'
+    docker_image: 'nginx:latest'
+    container_name: 'portal'
+    repo_directory: '/home/ec2-user/home_listings'
+
   tasks:
-    - name: Update and install dependencies
-      yum:
-        name: "{{ item }}"
+    - name: Clone Git repository
+      git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ repo_directory }}"
+
+    - name: Change directory to Git repository
+      command: chdir="{{ repo_directory }}" pwd
+
+    - name: Ensure Docker is installed
+      amazon.aws.package:
+        name: docker
         state: present
-      with_items:
-        - docker
-        - git
+
+    - name: Add ec2-user to the docker group
+      community.general.user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Log out ec2-user to apply group changes
+      command: pkill -KILL -u ec2-user
+      ignore_errors: yes
 
     - name: Start Docker service
       service:
@@ -21,31 +37,28 @@
         state: started
         enabled: yes
 
-    - name: Add ec2-user to the docker group
-      user:
-        name: ec2-user
-        groups: docker
-        append: yes
-
-    - name: Clone the web application repository
-      git:
-        repo: "{{ web_app_repo }}"
-        dest: "{{ web_app_dir }}"
-        update: yes
-
-    - name: Run Nginx container
-      docker_container:
-        name: portal  #nginx_server
+    - name: Create Docker container running NGINX
+      community.docker.docker_container:
+        name: "{{ container_name }}"
         image: "{{ docker_image }}"
         state: started
         ports:
           - "80:80"
 
-    - name: Copy web application files to Nginx container
-      command: docker cp {{ web_app_dir }}/index.html portal:/usr/share/nginx/html/
+    - name: Copy index.html to NGINX container
+      community.docker.docker_cp:
+        container: "{{ container_name }}"
+        src: "{{ repo_directory }}/index.html"
+        dest: /usr/share/nginx/html/index.html
 
-    - name: Copy styles.css to Nginx container
-      command: docker cp {{ web_app_dir }}/styles.css portal:/usr/share/nginx/html/
+    - name: Copy styles.css to NGINX container
+      community.docker.docker_cp:
+        container: "{{ container_name }}"
+        src: "{{ repo_directory }}/styles.css"
+        dest: /usr/share/nginx/html/styles.css
 
-    - name: Copy images folder to Nginx container
-      command: docker cp {{ web_app_dir }}/images portal:/usr/share/nginx/html/
+    - name: Copy image folder to NGINX container
+      community.docker.docker_cp:
+        container: "{{ container_name }}"
+        src: "{{ repo_directory }}/image"
+        dest: /usr/share/nginx/html/image
