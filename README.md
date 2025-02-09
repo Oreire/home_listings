@@ -76,6 +76,7 @@ resource "aws_instance" "portal_ec2" {
       host = self.public_ip
     }
   }
+   C:\Users\araiy\downloads>
 
   provisioner "file" {
     source      = "images/"  # Replace with your local folder path for images

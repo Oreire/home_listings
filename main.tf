@@ -1,14 +1,13 @@
 #Provisioning of an AWS Ubuntu EC2 Instance and installing docker on it
 
 provider "aws" {
-  region = "eu-west-2" # Change as needed
+  region     = "eu-west-2" # Change as needed
   access_key = var.access_key
   secret_key = var.secret_key
 }
 
 variable "access_key" {}
 variable "secret_key" {}
-variable "private_key" {}
 
 # Create a security group for the EC2 instance
 
@@ -39,13 +38,13 @@ resource "aws_security_group" "allow_ssh_http" {
 }
 
 resource "aws_instance" "dock" {
-  ami           = "ami-0cbf43fd299e3a464" # Updated Amazon Linux AMI
-  instance_type =  "t2.micro"
+  ami             = "ami-0cbf43fd299e3a464" # Updated Amazon Linux AMI
+  instance_type   = "t2.micro"
   security_groups = [aws_security_group.allow_ssh_http.name]
   connection {
     type        = "ssh"
-    user        = "ubuntu"
-    private_key =  var.private_key
+    user        = "ec2-user"
+    private_key = file("key.j2")  # Path to your private SSH key
     host        = self.public_ip
   }
 
@@ -66,7 +65,7 @@ resource "aws_instance" "dock" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = var.private_key
+      private_key = file("key.j2")
       host        = self.public_ip
     }
   }
@@ -79,13 +78,13 @@ resource "null_resource" "nginx" {
 
   provisioner "remote-exec" {
     inline = [
-      "docker run -d --name portal -p 80:80 nginx"         # No need for sudo now
+      "docker run -d --name portal -p 80:80 nginx" # No need for sudo now
     ]
 
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key =  var.private_key
+      private_key = file("key.j2")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -101,11 +100,11 @@ resource "null_resource" "copy_files" {
   provisioner "file" {
     source      = "index.html"
     destination = "/tmp/index.html"
-    
+
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key =  var.private_key
+      private_key = file("key.j2")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -114,11 +113,11 @@ resource "null_resource" "copy_files" {
   provisioner "file" {
     source      = "styles.css"
     destination = "/tmp/styles.css"
-    
+
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key =  var.private_key 
+      private_key = file("key.j2")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -127,11 +126,11 @@ resource "null_resource" "copy_files" {
   provisioner "file" {
     source      = "/images/"
     destination = "/tmp/images"
-    
+
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key =  var.private_key
+      private_key = file("key.j2")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -147,15 +146,15 @@ resource "null_resource" "copy_files" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = var.private_key
+      private_key = file("key.j2")
       host        = aws_instance.dock.public_ip
     }
-      
-      
-    }
+
+
   }
+}
 
 output "web_instance_ip" {
   value = aws_instance.dock.public_ip
-  
+
 }
