@@ -8,7 +8,7 @@ provider "aws" {
 resource "aws_instance" "web" {
   ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 AMI (change as needed)
   instance_type = "t2.micro"
-  key_name      = "your-key-name"  # Replace with your key name
+  key_name      = "Ans-Auth"  # Replace with your key name
 
   tags = {
     Name = "DockerInstance"

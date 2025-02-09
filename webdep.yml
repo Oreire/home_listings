@@ -1,0 +1,51 @@
+---
+- name: Deploy web application onto Nginx in Docker on EC2
+  hosts: webservers
+  become: yes
+  vars:
+    docker_image: "nginx"
+    web_app_repo: "https://github.com/your-repo/your-project.git"
+    web_app_dir: "/home/ec2-user/"
+  tasks:
+    - name: Update and install dependencies
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - docker
+        - git
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ec2-user to the docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Clone the web application repository
+      git:
+        repo: "{{ web_app_repo }}"
+        dest: "{{ web_app_dir }}"
+        update: yes
+
+    - name: Run Nginx container
+      docker_container:
+        name: portal  #nginx_server
+        image: "{{ docker_image }}"
+        state: started
+        ports:
+          - "80:80"
+
+    - name: Copy web application files to Nginx container
+      command: docker cp {{ web_app_dir }}/index.html portal:/usr/share/nginx/html/
+
+    - name: Copy styles.css to Nginx container
+      command: docker cp {{ web_app_dir }}/styles.css portal:/usr/share/nginx/html/
+
+    - name: Copy images folder to Nginx container
+      command: docker cp {{ web_app_dir }}/images portal:/usr/share/nginx/html/
