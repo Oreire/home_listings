@@ -4,7 +4,7 @@
   become: yes
   vars:
     docker_image: "nginx"
-    web_app_repo: "https://github.com/your-repo/your-project.git"
+    web_app_repo: "https://github.com/Oreire/home_listing.git"
     web_app_dir: "/home/ec2-user/"
   tasks:
     - name: Update and install dependencies
