@@ -11,8 +11,8 @@ variable "secret_key" {}
 
 # Create a security group for the EC2 instance
 
-resource "aws_security_group" "allow_ssh_http" {
-  name_prefix = "allow_ssh_http"
+resource "aws_security_group" "dock_nginx" {
+  name_prefix = "DOCKER_NGINX"
   description = "Allow SSH and HTTP access"
 
   ingress {
@@ -40,16 +40,16 @@ resource "aws_security_group" "allow_ssh_http" {
 resource "aws_instance" "dock" {
   ami             = "ami-0cbf43fd299e3a464" # Updated Amazon Linux AMI
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.allow_ssh_http.name]
+  security_groups = [aws_security_group.dock_nginx.name]
   connection {
     type        = "ssh"
     user        = "ec2-user"
-    private_key = file("key.j2")  # Path to your private SSH key
+    private_key = file("~/Downloads/Ans-Auth.pem") # Path to your private SSH key
     host        = self.public_ip
   }
 
   tags = {
-    Name = "nginx-server"
+    Name = "DOCKER-SYSTEM"
   }
 
   provisioner "remote-exec" {
@@ -65,7 +65,7 @@ resource "aws_instance" "dock" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = self.public_ip
     }
   }
@@ -84,7 +84,7 @@ resource "null_resource" "nginx" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -104,7 +104,7 @@ resource "null_resource" "copy_files" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -117,7 +117,7 @@ resource "null_resource" "copy_files" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -130,7 +130,7 @@ resource "null_resource" "copy_files" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = aws_instance.dock.public_ip
     }
   }
@@ -146,7 +146,7 @@ resource "null_resource" "copy_files" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("key.j2")
+      private_key = file("~/Downloads/Ans-Auth.pem")
       host        = aws_instance.dock.public_ip
     }
 
