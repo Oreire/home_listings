@@ -8,57 +8,88 @@
     repo_directory: '/home/ec2-user/home_listings'
 
   tasks:
+    - name: Install Git
+      yum:
+        name: git
+        state: present
+      become: yes
+
     - name: Clone Git repository
       git:
         repo: "{{ git_repo_url }}"
         dest: "{{ repo_directory }}"
 
     - name: Change directory to Git repository
-      command: chdir="{{ repo_directory }}" pwd
-
-    - name: Ensure Docker is installed
-      amazon.aws.package:
+      command: pwd
+      args:
+        chdir: "{{ repo_directory }}"
+         
+    - name: Install Docker
+      yum:
         name: docker
         state: present
-
-    - name: Add ec2-user to the docker group
-      community.general.user:
-        name: ec2-user
-        groups: docker
-        append: yes
-
-    - name: Log out ec2-user to apply group changes
-      command: pkill -KILL -u ec2-user
-      ignore_errors: yes
+      become: yes
 
     - name: Start Docker service
       service:
         name: docker
         state: started
         enabled: yes
+      become: yes
 
-    - name: Create Docker container running NGINX
-      community.docker.docker_container:
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+      become: yes
+
+    - name: Restart SSH service to apply group changes
+      service:
+        name: sshd
+        state: restarted
+      become: yes
+
+    - name: Restart Docker service
+      systemd:
+        name: docker
+        state: restarted
+      become: yes
+
+    - name: Pull Nginx image from Docker Hub
+      docker_image:
+        name: nginx
+        source: pull
+        tag: latest
+        api_version: 1.40
+        
+    - name: Create NGINX container
+      docker_container:
         name: "{{ container_name }}"
         image: "{{ docker_image }}"
         state: started
         ports:
           - "80:80"
+        api_version: 1.40
+        restart_policy: always
 
-    - name: Copy index.html to NGINX container
-      community.docker.docker_cp:
-        container: "{{ container_name }}"
+    - name: Copy index.html to host
+      copy:
         src: "{{ repo_directory }}/index.html"
-        dest: /usr/share/nginx/html/index.html
+        dest: "/usr/share/nginx/html/index.html"
+        mode: '0755'
+      become: yes
 
-    - name: Copy styles.css to NGINX container
-      community.docker.docker_cp:
-        container: "{{ container_name }}"
+    - name: Copy styles.css to host
+      copy:
         src: "{{ repo_directory }}/styles.css"
-        dest: /usr/share/nginx/html/styles.css
+        dest: "/usr/share/nginx/html/styles.css"
+        mode: '0755'
+      become: yes
 
-    - name: Copy image folder to NGINX container
-      community.docker.docker_cp:
-        container: "{{ container_name }}"
+    - name: Copy image folder to host
+      copy:
         src: "{{ repo_directory }}/image"
-        dest: /usr/share/nginx/html/image
+        dest: "/usr/share/nginx/html/image"
+        mode: '0755'
+      become: yes
