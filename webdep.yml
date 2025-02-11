@@ -73,21 +73,21 @@
         api_version: 1.40
         restart_policy: always
 
-    - name: Copy index.html to host
+    - name: Copy index.html to portal
       copy:
         src: "{{ repo_directory }}/index.html"
         dest: "portal:/usr/share/nginx/html/index.html"
         mode: '0644'
       become: yes
 
-    - name: Copy styles.css to host
+    - name: Copy styles.css to portal
       copy:
         src: "{{ repo_directory }}/styles.css"
         dest: "portal:/usr/share/nginx/html/styles.css"
         mode: '0644'
       become: yes
 
-    - name: Copy image folder to host
+    - name: Copy image folder to portal
       copy:
         src: "{{ repo_directory }}/image"
         dest: "portal:/usr/share/nginx/html/image"
