@@ -76,20 +76,20 @@
     - name: Copy index.html to host
       copy:
         src: "{{ repo_directory }}/index.html"
-        dest: "/usr/share/nginx/html/index.html"
+        dest: "portal:/usr/share/nginx/html/index.html"
         mode: '0644'
       become: yes
 
     - name: Copy styles.css to host
       copy:
         src: "{{ repo_directory }}/styles.css"
-        dest: "/usr/share/nginx/html/styles.css"
+        dest: "portal:/usr/share/nginx/html/styles.css"
         mode: '0644'
       become: yes
 
     - name: Copy image folder to host
       copy:
         src: "{{ repo_directory }}/image"
-        dest: "/usr/share/nginx/html/image"
+        dest: "portal:/usr/share/nginx/html/image"
         mode: '0755'
       become: yes
