@@ -3,7 +3,7 @@
   hosts: aws_amazon_linux
   vars:
     git_repo_url: 'https://github.com/Oreire/home_listing.git'
-    docker_image: 'nginx:stable-alpine3.20-perl'
+    docker_image: 'nginx:stable-alpine3.20-perl' 
     container_name: 'portal'
     repo_directory: '/home/ec2-user/home_listings'
 
