@@ -1,4 +1,7 @@
 # home_listings
+
+Overview:
+Designed and implemented a containerized architecture for a web application using Docker. Automated containerization streamlined development, testing, and deployment workflows, ensuring consistency across environments and reducing configuration drift. This project demonstrates modern DevOps practices by enabling scalable application delivery, improving developer productivity, and laying the foundation for production‑ready container orchestration.
 Docker Containerization for Web Application Implementation  
 
 - name: Setup web server and deploy content
